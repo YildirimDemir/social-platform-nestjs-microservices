@@ -1,0 +1,63 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreatePostInput {
+  content: String!
+  imageUrl: String
+  isPinned: Boolean
+  location: String
+}
+
+type Mutation {
+  createPost(input: CreatePostInput!): Post!
+  deletePost(postId: Int!): Boolean!
+  replyToPost(input: ReplyToPostInput!): Post!
+  toggleLikePost(postId: Int!): Post!
+  toggleSavePost(postId: Int!): Post!
+}
+
+type Post {
+  author: User!
+  commentsCount: Int!
+  content: String!
+  id: Int!
+  imageUrl: String
+  isEdited: Boolean!
+  isLiked: Boolean
+  isPinned: Boolean!
+  isReply: Boolean!
+  isSaved: Boolean
+  likesCount: Int!
+  location: String
+  replyToPost: Post
+  replyToPostId: Int
+}
+
+type Query {
+  likedPosts: [Post!]!
+  posts(includeReplies: Boolean = false): [Post!]!
+  postsByUser(includeReplies: Boolean = false, userId: Int!): [Post!]!
+  repliesForPost(postId: Int!): [Post!]!
+  savedPosts: [Post!]!
+}
+
+input ReplyToPostInput {
+  content: String!
+  imageUrl: String
+  isPinned: Boolean
+  location: String
+  postId: Int!
+}
+
+type Role {
+  id: Int!
+  name: String!
+}
+
+type User {
+  email: String!
+  id: Int!
+  roles: [Role!]
+  username: String!
+}

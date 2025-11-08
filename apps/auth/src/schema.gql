@@ -1,0 +1,57 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input GetAllUsersDto {
+  limit: Int = 20
+  page: Int = 1
+  roles: [String!]
+  search: String
+}
+
+input GetOneUserDto {
+  email: String
+  id: Int
+  username: String
+}
+
+type PaginatedUsersModel {
+  items: [User!]!
+  limit: Int!
+  page: Int!
+  total: Int!
+}
+
+type Post {
+  author: User!
+  commentsCount: Int!
+  content: String!
+  id: Int!
+  imageUrl: String
+  isEdited: Boolean!
+  isLiked: Boolean
+  isPinned: Boolean!
+  isReply: Boolean!
+  isSaved: Boolean
+  likesCount: Int!
+  location: String
+  replyToPost: Post
+  replyToPostId: Int
+}
+
+type Query {
+  user(input: GetOneUserDto!): User!
+  users(input: GetAllUsersDto): PaginatedUsersModel!
+}
+
+type Role {
+  id: Int!
+  name: String!
+}
+
+type User {
+  email: String!
+  id: Int!
+  roles: [Role!]
+  username: String!
+}

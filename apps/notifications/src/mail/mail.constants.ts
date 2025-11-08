@@ -1,0 +1,2 @@
+export const MAIL_TRANSPORTER = 'MAIL_TRANSPORTER';
+export const MAIL_FROM = 'MAIL_FROM';
