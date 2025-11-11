@@ -10,6 +10,8 @@ import { User, Role, UsersRepository } from '@app/common';
 import { GetOneUserDto } from './dto/get-one-user.dto';
 import { GetAllUsersDto } from './dto/get-all-users.dto';
 import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+import { hashValue } from '../utils/hash.util';
 
 interface CreateUserOptions {
   username: string;
@@ -27,6 +29,16 @@ export interface PaginatedUsersResult {
   limit: number;
 }
 
+export interface ToggleFollowResult {
+  isFollowing: boolean;
+  followerCount: number;
+  followingCount: number;
+}
+
+export interface MutationMessage {
+  message: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -35,6 +47,7 @@ export class UsersService {
     private readonly userEntityRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly configService: ConfigService,
   ) {}
 
   async findById(id: number) {
@@ -201,6 +214,144 @@ export class UsersService {
     }
 
     return this.toPublicUser(user);
+  }
+
+  async toggleFollow(
+    currentUserId: number,
+    targetUserId: number,
+  ): Promise<ToggleFollowResult> {
+    if (!currentUserId || !targetUserId) {
+      throw new BadRequestException('Invalid user ids.');
+    }
+
+    if (currentUserId === targetUserId) {
+      throw new BadRequestException('You cannot follow yourself.');
+    }
+
+    const [currentUser, targetUser] = await Promise.all([
+      this.userEntityRepository.findOne({
+        where: { id: currentUserId },
+        relations: { following: true },
+      }),
+      this.userEntityRepository.findOne({
+        where: { id: targetUserId },
+        relations: { followers: true },
+      }),
+    ]);
+
+    if (!currentUser) {
+      throw new NotFoundException('Current user not found.');
+    }
+
+    if (!targetUser) {
+      throw new NotFoundException('Target user not found.');
+    }
+
+    const isAlreadyFollowing =
+      currentUser.following?.some((user) => user.id === targetUserId) ?? false;
+
+    const relation = this.userEntityRepository
+      .createQueryBuilder()
+      .relation(User, 'following')
+      .of(currentUserId);
+
+    if (isAlreadyFollowing) {
+      await relation.remove(targetUserId);
+    } else {
+      await relation.add(targetUserId);
+    }
+
+    const [updatedCurrent, updatedTarget] = await Promise.all([
+      this.userEntityRepository.findOne({
+        where: { id: currentUserId },
+        relations: { following: true },
+      }),
+      this.userEntityRepository.findOne({
+        where: { id: targetUserId },
+        relations: { followers: true },
+      }),
+    ]);
+
+    return {
+      isFollowing: !isAlreadyFollowing,
+      followerCount: updatedTarget?.followers?.length ?? 0,
+      followingCount: updatedCurrent?.following?.length ?? 0,
+    };
+  }
+
+  async updateUsername(userId: number, newUsername: string): Promise<PublicUser> {
+    const username = newUsername?.trim();
+
+    if (!username) {
+      throw new BadRequestException('Username cannot be empty.');
+    }
+
+    const existing = await this.userEntityRepository.findOne({
+      where: { username },
+    });
+
+    if (existing && existing.id !== userId) {
+      throw new BadRequestException('Username is already taken.');
+    }
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { username },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
+  }
+
+  async updatePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ): Promise<MutationMessage> {
+    const user = await this.userEntityRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException('Password values are required.');
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw new BadRequestException('New passwords do not match.');
+    }
+
+    if (newPassword.length < 8) {
+      throw new BadRequestException('New password must be at least 8 characters.');
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isCurrentValid) {
+      throw new BadRequestException('Current password is incorrect.');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('New password must be different from the current password.');
+    }
+
+    const hashed = await hashValue(newPassword, this.configService);
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { password: hashed },
+    );
+
+    return { message: 'Password updated successfully.' };
   }
 
   toPublicUser(user: User): PublicUser {

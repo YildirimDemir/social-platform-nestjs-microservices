@@ -56,4 +56,17 @@ export class User extends AbstractEntity<User> {
     inverseJoinColumn: { name: 'post_id', referencedColumnName: 'id' },
   })
   savedPosts?: Post[];
+
+  @Field(() => [User], { nullable: true })
+  @ManyToMany(() => User, (user) => user.followers)
+  @JoinTable({
+    name: 'user_followers',
+    joinColumn: { name: 'follower_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'following_id', referencedColumnName: 'id' },
+  })
+  following?: User[];
+
+  @Field(() => [User], { nullable: true })
+  @ManyToMany(() => User, (user) => user.following)
+  followers?: User[];
 }

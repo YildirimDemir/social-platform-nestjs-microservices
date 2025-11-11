@@ -1,8 +1,25 @@
-import { Args, Query, Resolver, ObjectType, Field, Int } from '@nestjs/graphql';
-import { User } from '@app/common';
-import { UsersService, PaginatedUsersResult } from './users.service';
+import {
+  Args,
+  Query,
+  Resolver,
+  ObjectType,
+  Field,
+  Int,
+  Mutation,
+} from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { User, CurrentUser, JwtAuthGuard } from '@app/common';
+import {
+  UsersService,
+  PaginatedUsersResult,
+  PublicUser,
+  ToggleFollowResult,
+  MutationMessage,
+} from './users.service';
 import { GetAllUsersDto } from './dto/get-all-users.dto';
 import { GetOneUserDto } from './dto/get-one-user.dto';
+import { UpdateUsernameDto } from './dto/update-username.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @ObjectType()
 class PaginatedUsersModel {
@@ -17,6 +34,24 @@ class PaginatedUsersModel {
 
   @Field(() => Int)
   limit: number;
+}
+
+@ObjectType()
+class ToggleFollowModel implements ToggleFollowResult {
+  @Field(() => Boolean)
+  isFollowing: boolean;
+
+  @Field(() => Int)
+  followerCount: number;
+
+  @Field(() => Int)
+  followingCount: number;
+}
+
+@ObjectType()
+class MutationMessageModel implements MutationMessage {
+  @Field()
+  message: string;
 }
 
 @Resolver(() => User)
@@ -37,5 +72,37 @@ export class UsersResolver {
     @Args('input', { type: () => GetOneUserDto }) input: GetOneUserDto,
   ) {
     return this.usersService.getUser(input);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => ToggleFollowModel)
+  async toggleFollow(
+    @Args('userId', { type: () => Int }) userId: number,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<ToggleFollowResult> {
+    return this.usersService.toggleFollow(currentUser.id, userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async updateUsername(
+    @Args('input', { type: () => UpdateUsernameDto }) input: UpdateUsernameDto,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.updateUsername(currentUser.id, input.newUsername);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => MutationMessageModel)
+  async updatePassword(
+    @Args('input', { type: () => UpdatePasswordDto }) input: UpdatePasswordDto,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<MutationMessage> {
+    return this.usersService.updatePassword(
+      currentUser.id,
+      input.currentPassword,
+      input.newPassword,
+      input.confirmPassword,
+    );
   }
 }
