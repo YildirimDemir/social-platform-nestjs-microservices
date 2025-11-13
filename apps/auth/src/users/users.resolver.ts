@@ -18,8 +18,9 @@ import {
 } from './users.service';
 import { GetAllUsersDto } from './dto/get-all-users.dto';
 import { GetOneUserDto } from './dto/get-one-user.dto';
-import { UpdateUsernameDto } from './dto/update-username.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateProfilePhotoDto } from './dto/update-profile-photo.dto';
+import { UpdateUsernameDto } from './dto/update-username.dto';
 
 @ObjectType()
 class PaginatedUsersModel {
@@ -104,5 +105,23 @@ export class UsersResolver {
       input.newPassword,
       input.confirmPassword,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async updateProfilePhoto(
+    @Args('input', { type: () => UpdateProfilePhotoDto })
+    input: UpdateProfilePhotoDto,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.updateProfilePhoto(currentUser.id, input.photoUrl);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async removeProfilePhoto(
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.removeProfilePhoto(currentUser.id);
   }
 }

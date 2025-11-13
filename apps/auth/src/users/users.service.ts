@@ -13,6 +13,10 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { hashValue } from '../utils/hash.util';
 
+const DEFAULT_PROFILE_PHOTO =
+  process.env.DEFAULT_PROFILE_PHOTO_URL ||
+  'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+
 interface CreateUserOptions {
   username: string;
   email: string;
@@ -98,7 +102,7 @@ export class UsersService {
         conditions.length === 1
           ? conditions[0]
           : conditions.map((condition) => ({ ...condition })),
-      relations: { roles: true },
+      relations: { roles: true, followers: true, following: true },
     });
 
     if (!user) {
@@ -178,6 +182,7 @@ export class UsersService {
       username,
       email,
       password,
+      profilePhoto: DEFAULT_PROFILE_PHOTO,
       roles,
     });
 
@@ -352,6 +357,53 @@ export class UsersService {
     );
 
     return { message: 'Password updated successfully.' };
+  }
+
+  async updateProfilePhoto(
+    userId: number,
+    photoUrl: string,
+  ): Promise<PublicUser> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user.');
+    }
+
+    const sanitizedUrl = photoUrl?.trim();
+
+    if (!sanitizedUrl) {
+      throw new BadRequestException('Photo URL is required.');
+    }
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { profilePhoto: sanitizedUrl },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
+  }
+
+  async removeProfilePhoto(userId: number): Promise<PublicUser> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user.');
+    }
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { profilePhoto: DEFAULT_PROFILE_PHOTO },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
   }
 
   toPublicUser(user: User): PublicUser {

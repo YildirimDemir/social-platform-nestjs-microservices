@@ -69,4 +69,8 @@ export class User extends AbstractEntity<User> {
   @Field(() => [User], { nullable: true })
   @ManyToMany(() => User, (user) => user.following)
   followers?: User[];
+
+  @Field({ nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  profilePhoto?: string;
 }
