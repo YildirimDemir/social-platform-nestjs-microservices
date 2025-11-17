@@ -73,4 +73,12 @@ export class User extends AbstractEntity<User> {
   @Field({ nullable: true })
   @Column({ type: 'varchar', length: 255, nullable: true })
   profilePhoto?: string;
+
+  @Field({ nullable: true })
+  @Column({ type: 'text', nullable: true, default: '' })
+  bio?: string;
+
+  @Field({ nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true, default: '' })
+  headerImage?: string;
 }

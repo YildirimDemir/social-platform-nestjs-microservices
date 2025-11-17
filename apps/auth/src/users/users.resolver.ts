@@ -21,6 +21,8 @@ import { GetOneUserDto } from './dto/get-one-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateProfilePhotoDto } from './dto/update-profile-photo.dto';
 import { UpdateUsernameDto } from './dto/update-username.dto';
+import { UpdateBioDto } from './dto/update-bio.dto';
+import { UpdateHeaderImageDto } from './dto/update-header-image.dto';
 
 @ObjectType()
 class PaginatedUsersModel {
@@ -123,5 +125,32 @@ export class UsersResolver {
     @CurrentUser() currentUser: PublicUser,
   ): Promise<PublicUser> {
     return this.usersService.removeProfilePhoto(currentUser.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async updateBio(
+    @Args('input', { type: () => UpdateBioDto }) input: UpdateBioDto,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.updateBio(currentUser.id, input.bio);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async updateHeaderImage(
+    @Args('input', { type: () => UpdateHeaderImageDto })
+    input: UpdateHeaderImageDto,
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.updateHeaderImage(currentUser.id, input.headerImage);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => User)
+  async removeHeaderImage(
+    @CurrentUser() currentUser: PublicUser,
+  ): Promise<PublicUser> {
+    return this.usersService.removeHeaderImage(currentUser.id);
   }
 }

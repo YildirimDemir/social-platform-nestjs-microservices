@@ -183,6 +183,8 @@ export class UsersService {
       email,
       password,
       profilePhoto: DEFAULT_PROFILE_PHOTO,
+      bio: '',
+      headerImage: '',
       roles,
     });
 
@@ -395,6 +397,74 @@ export class UsersService {
     await this.userEntityRepository.update(
       { id: userId },
       { profilePhoto: DEFAULT_PROFILE_PHOTO },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
+  }
+
+  async updateBio(userId: number, bio?: string): Promise<PublicUser> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user.');
+    }
+
+    const sanitized = bio?.trim() ?? '';
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { bio: sanitized },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
+  }
+
+  async updateHeaderImage(
+    userId: number,
+    headerImage?: string,
+  ): Promise<PublicUser> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user.');
+    }
+
+    const sanitized = headerImage?.trim();
+
+    if (!sanitized) {
+      throw new BadRequestException('Header image URL is required.');
+    }
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { headerImage: sanitized },
+    );
+
+    const updated = await this.findById(userId);
+
+    if (!updated) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUser(updated);
+  }
+
+  async removeHeaderImage(userId: number): Promise<PublicUser> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user.');
+    }
+
+    await this.userEntityRepository.update(
+      { id: userId },
+      { headerImage: '' },
     );
 
     const updated = await this.findById(userId);
