@@ -1,4 +1,4 @@
-import { Directive, Field, HideField, ObjectType } from '@nestjs/graphql';
+import { Directive, Field, HideField, Int, ObjectType } from '@nestjs/graphql';
 import { AbstractEntity } from '../database';
 import {
   Column,
@@ -69,6 +69,12 @@ export class User extends AbstractEntity<User> {
   @Field(() => [User], { nullable: true })
   @ManyToMany(() => User, (user) => user.following)
   followers?: User[];
+
+  @Field(() => Int, { defaultValue: 0 })
+  followersCount?: number;
+
+  @Field(() => Int, { defaultValue: 0 })
+  followingCount?: number;
 
   @Field({ nullable: true })
   @Column({ type: 'varchar', length: 255, nullable: true })

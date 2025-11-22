@@ -225,6 +225,39 @@ export class PostsService {
     return this.attachMetaToMany(posts, meta);
   }
 
+  async searchPosts(
+    search: string,
+    currentUserId: number,
+    includeReplies = true,
+  ): Promise<Post[]> {
+    const term = search?.trim().toLowerCase();
+    if (!term) {
+      return [];
+    }
+
+    const qb = this.postRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.replyToPost', 'replyToPost')
+      .leftJoinAndSelect('replyToPost.author', 'replyAuthor')
+      .orderBy('post.id', 'DESC')
+      .where(
+        '(LOWER(post.content) LIKE :search OR LOWER(author.username) LIKE :search)',
+        { search: `%${term}%` },
+      );
+
+    if (!includeReplies) {
+      qb.andWhere('post.isReply = :isReply', { isReply: false });
+    }
+
+    const [posts, meta] = await Promise.all([
+      qb.getMany(),
+      this.loadUserMeta(currentUserId),
+    ]);
+
+    return this.attachMetaToMany(posts, meta);
+  }
+
   async findLikedByUser(userId: number): Promise<Post[]> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -436,7 +469,10 @@ export class PostsService {
       await lastValueFrom(
         this.notificationsClient.emit(NOTIFICATION_EVENT_POST_LIKED, {
           email: recipientEmail,
+          recipientUserId: post.author?.id,
           likerUsername: liker.username ?? liker.email ?? 'Someone',
+          likerId: liker.id,
+          likerProfilePhoto: liker.profilePhoto ?? null,
           postId: post.id,
           postContent: post.content,
         }),
@@ -462,6 +498,9 @@ export class PostsService {
         this.notificationsClient.emit(NOTIFICATION_EVENT_POST_REPLIED, {
           email: recipientEmail,
           replyUsername: replier.username ?? replier.email ?? 'Someone',
+          replyUserId: replier.id,
+          replyProfilePhoto: replier.profilePhoto ?? null,
+          recipientUserId: parentPost.author?.id,
           replyContent,
           postId: parentPost.id,
           replyId,

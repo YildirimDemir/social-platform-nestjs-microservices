@@ -15,6 +15,21 @@ input GetOneUserDto {
   username: String
 }
 
+type Mutation {
+  removeHeaderImage: User!
+  removeProfilePhoto: User!
+  toggleFollow(userId: Int!): ToggleFollowModel!
+  updateBio(input: UpdateBioDto!): User!
+  updateHeaderImage(input: UpdateHeaderImageDto!): User!
+  updatePassword(input: UpdatePasswordDto!): MutationMessageModel!
+  updateProfilePhoto(input: UpdateProfilePhotoDto!): User!
+  updateUsername(input: UpdateUsernameDto!): User!
+}
+
+type MutationMessageModel {
+  message: String!
+}
+
 type PaginatedUsersModel {
   items: [User!]!
   limit: Int!
@@ -40,6 +55,8 @@ type Post {
 }
 
 type Query {
+  getFollowers(userId: Int!): [User!]!
+  getFollowing(userId: Int!): [User!]!
   user(input: GetOneUserDto!): User!
   users(input: GetAllUsersDto): PaginatedUsersModel!
 }
@@ -49,9 +66,44 @@ type Role {
   name: String!
 }
 
+type ToggleFollowModel {
+  followerCount: Int!
+  followingCount: Int!
+  isFollowing: Boolean!
+}
+
+input UpdateBioDto {
+  bio: String
+}
+
+input UpdateHeaderImageDto {
+  headerImage: String
+}
+
+input UpdatePasswordDto {
+  confirmPassword: String!
+  currentPassword: String!
+  newPassword: String!
+}
+
+input UpdateProfilePhotoDto {
+  photoUrl: String!
+}
+
+input UpdateUsernameDto {
+  newUsername: String!
+}
+
 type User {
+  bio: String
   email: String!
+  followers: [User!]
+  followersCount: Int!
+  following: [User!]
+  followingCount: Int!
+  headerImage: String
   id: Int!
+  profilePhoto: String
   roles: [Role!]
   username: String!
 }

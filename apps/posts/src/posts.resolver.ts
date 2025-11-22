@@ -103,4 +103,19 @@ export class PostsResolver {
   ): Promise<Post[]> {
     return this.postsService.findRepliesForPost(postId, user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Query(() => [Post])
+  searchPosts(
+    @Args('search', { type: () => String }) search: string,
+    @CurrentUser() user: User,
+    @Args('includeReplies', {
+      type: () => Boolean,
+      nullable: true,
+      defaultValue: true,
+    })
+    includeReplies = true,
+  ): Promise<Post[]> {
+    return this.postsService.searchPosts(search, user.id, includeReplies);
+  }
 }

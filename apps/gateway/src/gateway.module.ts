@@ -34,6 +34,10 @@ import { authContext } from './auth.context';
                 name: 'auth',
                 url: configService.getOrThrow('AUTH_GRAPHQL_URL'),
               },
+              {
+                name: 'notifications',
+                url: configService.getOrThrow('NOTIFICATIONS_GRAPHQL_URL'),
+              },
             ],
           }),
           buildService({ url }) {

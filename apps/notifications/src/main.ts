@@ -12,6 +12,8 @@ async function bootstrap() {
 
   const host = configService.get<string>('NOTIFICATIONS_HOST', '0.0.0.0');
   const port = configService.get<number>('NOTIFICATIONS_PORT', 4010);
+  const httpPort = configService.get<number>('NOTIFICATIONS_HTTP_PORT', 4012);
+  const httpHost = configService.get<string>('NOTIFICATIONS_HTTP_HOST', '0.0.0.0');
 
   app.connectMicroservice({
     transport: Transport.TCP,
@@ -19,6 +21,7 @@ async function bootstrap() {
   });
 
   await app.startAllMicroservices();
+  await app.listen(httpPort, httpHost);
 }
 
 bootstrap();

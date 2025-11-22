@@ -2,19 +2,27 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreatePostInput {
-  content: String!
-  imageUrl: String
-  isPinned: Boolean
-  location: String
-}
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
 
 type Mutation {
-  createPost(input: CreatePostInput!): Post!
-  deletePost(postId: Int!): Boolean!
-  replyToPost(input: ReplyToPostInput!): Post!
-  toggleLikePost(postId: Int!): Post!
-  toggleSavePost(postId: Int!): Post!
+  deleteNotification(id: Int!): Boolean!
+  markNotificationsRead(ids: [Int!]!): Boolean!
+}
+
+type Notification {
+  actorProfilePhoto: String
+  actorUserId: Int
+  actorUsername: String
+  createdAt: DateTime
+  id: Int!
+  payload: String
+  postId: Int
+  readAt: DateTime
+  type: String!
+  userId: Int!
 }
 
 type Post {
@@ -35,20 +43,7 @@ type Post {
 }
 
 type Query {
-  likedPosts: [Post!]!
-  posts(includeReplies: Boolean = false): [Post!]!
-  postsByUser(includeReplies: Boolean = false, userId: Int!): [Post!]!
-  repliesForPost(postId: Int!): [Post!]!
-  savedPosts: [Post!]!
-  searchPosts(includeReplies: Boolean = true, search: String!): [Post!]!
-}
-
-input ReplyToPostInput {
-  content: String!
-  imageUrl: String
-  isPinned: Boolean
-  location: String
-  postId: Int!
+  notifications(limit: Int, offset: Int): [Notification!]!
 }
 
 type Role {

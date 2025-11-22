@@ -77,6 +77,20 @@ export class UsersResolver {
     return this.usersService.getUser(input);
   }
 
+  @Query(() => [User], { name: 'getFollowers' })
+  async getFollowersList(
+    @Args('userId', { type: () => Int }) userId: number,
+  ) {
+    return this.usersService.getFollowers(userId);
+  }
+
+  @Query(() => [User], { name: 'getFollowing' })
+  async getFollowingList(
+    @Args('userId', { type: () => Int }) userId: number,
+  ) {
+    return this.usersService.getFollowing(userId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Mutation(() => ToggleFollowModel)
   async toggleFollow(

@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import {
   NOTIFICATION_EVENT_EMAIL_VERIFICATION,
   NOTIFICATION_EVENT_EMAIL_WELCOME,
@@ -30,5 +30,19 @@ export class NotificationsController {
   @EventPattern(NOTIFICATION_EVENT_POST_REPLIED)
   handlePostReplied(@Payload() payload: any) {
     return this.notificationsService.sendPostRepliedEmail(payload);
+  }
+
+  @MessagePattern('notifications.list')
+  async listNotifications(@Payload() payload: { userId: number; limit?: number; offset?: number }) {
+    const { userId, limit, offset } = payload || {};
+    return this.notificationsService.listByUser(userId, limit, offset);
+  }
+
+  @MessagePattern('notifications.markRead')
+  async markNotificationsRead(
+    @Payload() payload: { userId: number; ids: number[] },
+  ) {
+    const { userId, ids } = payload || {};
+    return this.notificationsService.markRead(userId, ids ?? []);
   }
 }

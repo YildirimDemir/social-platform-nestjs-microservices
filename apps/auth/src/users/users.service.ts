@@ -24,7 +24,10 @@ interface CreateUserOptions {
   roles: Role[];
 }
 
-export type PublicUser = Omit<User, 'password'>;
+export type PublicUser = Omit<User, 'password'> & {
+  followersCount?: number;
+  followingCount?: number;
+};
 
 export interface PaginatedUsersResult {
   items: PublicUser[];
@@ -110,6 +113,40 @@ export class UsersService {
     }
 
     return this.toPublicUser(user);
+  }
+
+  async getFollowers(userId: number): Promise<PublicUser[]> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user id.');
+    }
+
+    const user = await this.userEntityRepository.findOne({
+      where: { id: userId },
+      relations: { followers: { roles: true } },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUsers(user.followers ?? []);
+  }
+
+  async getFollowing(userId: number): Promise<PublicUser[]> {
+    if (!userId) {
+      throw new BadRequestException('Invalid user id.');
+    }
+
+    const user = await this.userEntityRepository.findOne({
+      where: { id: userId },
+      relations: { following: { roles: true } },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    return this.toPublicUsers(user.following ?? []);
   }
 
   async getUsers(dto: GetAllUsersDto): Promise<PaginatedUsersResult> {
@@ -477,8 +514,20 @@ export class UsersService {
   }
 
   toPublicUser(user: User): PublicUser {
-    const { password, ...rest } = user;
-    return rest;
+    const { password, followers, following, ...rest } = user;
+
+    const followersCount = Array.isArray(followers)
+      ? followers.length
+      : (user as any).followersCount ?? 0;
+    const followingCount = Array.isArray(following)
+      ? following.length
+      : (user as any).followingCount ?? 0;
+
+    return {
+      ...(rest as PublicUser),
+      followersCount,
+      followingCount,
+    };
   }
 
   toPublicUsers(users: User[]): PublicUser[] {
